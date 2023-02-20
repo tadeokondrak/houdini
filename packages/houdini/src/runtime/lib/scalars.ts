@@ -147,46 +147,62 @@ export function unmarshalSelection(
 	const targetSelection = getFieldsForType(selection, data['__typename'] as string)
 
 	// we're looking at an object, build it up from the current input
-	return Object.fromEntries(
-		Object.entries(data as {}).map(([fieldName, value]) => {
-			// look up the type for the field
-			const { type, selection } = targetSelection[fieldName]
-			// if we don't have type information for this field, just use it directly
-			// it's most likely a non-custom scalars or enums
-			if (!type) {
-				return [fieldName, value]
-			}
+	const result: Record<string, any> = {}
+	// if set, this object is null because one of its direct children were tagged with @required
+	let cascadeNull = false
 
-			// if there is a sub selection, walk down the selection
-			if (selection) {
-				return [
-					fieldName,
-					// unmarshalSelection({ artifact, config, input: value, rootType: type }),
-					unmarshalSelection(config, selection, value),
-				]
-			}
-			if (value === null) {
-				return [fieldName, value]
-			}
-			// is the type something that requires marshaling
-			if (config.scalars?.[type]?.marshal) {
-				const unmarshalFn = config.scalars[type]?.unmarshal
-				if (!unmarshalFn) {
-					throw new Error(
-						`scalar type ${type} is missing an \`unmarshal\` function. see https://github.com/AlecAivazis/houdini#%EF%B8%8Fcustom-scalars`
-					)
-				}
-				if (Array.isArray(value)) {
-					return [fieldName, value.map(unmarshalFn)]
-				}
-				return [fieldName, unmarshalFn(value)]
-			}
+	for (const [fieldName, value] of Object.entries(data as {})) {
+		// look up the type for the field
+		const { type, selection, bubbleNull } = targetSelection[fieldName]
 
-			// if the type doesn't require marshaling and isn't a referenced type
-			// then the type is a scalar that doesn't require marshaling
-			return [fieldName, value]
-		})
-	)
+		// if we don't have type information for this field, just use it directly
+		// it's most likely a non-custom scalars or enums
+		if (!type) {
+			result[fieldName] = value
+			if (result[fieldName] === null && bubbleNull) {
+				cascadeNull = true
+			}
+			continue
+		}
+
+		// if there is a sub selection, walk down the selection
+		if (selection) {
+			// unmarshalSelection({ artifact, config, input: value, rootType: type }),
+			result[fieldName] = unmarshalSelection(config, selection, value)
+			if (result[fieldName] === null && bubbleNull) {
+				cascadeNull = true
+			}
+			continue
+		}
+		if (value === null) {
+			result[fieldName] = value
+			if (bubbleNull) {
+				cascadeNull = true
+			}
+			continue
+		}
+		// is the type something that requires marshaling
+		if (config.scalars?.[type]?.marshal) {
+			const unmarshalFn = config.scalars[type]?.unmarshal
+			if (!unmarshalFn) {
+				throw new Error(
+					`scalar type ${type} is missing an \`unmarshal\` function. see https://github.com/AlecAivazis/houdini#%EF%B8%8Fcustom-scalars`
+				)
+			}
+			if (Array.isArray(value)) {
+				result[fieldName] = value.map(unmarshalFn)
+				continue
+			}
+			result[fieldName] = unmarshalFn(value)
+			continue
+		}
+
+		// if the type doesn't require marshaling and isn't a referenced type
+		// then the type is a scalar that doesn't require marshaling
+		result[fieldName] = value
+	}
+
+	return cascadeNull ? null : result
 }
 
 // we can't use config.isScalar because that would require bundling in ~/common

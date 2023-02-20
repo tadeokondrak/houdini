@@ -205,6 +205,13 @@ export default function selection({
 				fieldObj.nullable = true
 			}
 
+			const requiredDirective = field.directives?.find(
+				(directive) => directive.name.value == config.requiredDirective
+			)
+			if (requiredDirective) {
+				fieldObj.bubbleNull = true
+			}
+
 			// is there an operation for this field
 			const operationKey = pathSoFar.join(',')
 			if (operations[operationKey]) {

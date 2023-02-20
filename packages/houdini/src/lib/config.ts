@@ -596,6 +596,10 @@ export class Config {
 		return 'policy'
 	}
 
+	get requiredDirective() {
+		return 'required'
+	}
+
 	paginationQueryName(documentName: string) {
 		return documentName + '_Pagination_Query'
 	}

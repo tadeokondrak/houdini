@@ -504,6 +504,67 @@ describe('unmarshal selection', function () {
 		})
 	})
 
+	test('bubble null', function () {
+		const data = {
+			item: {
+				createdAt: null,
+			},
+		}
+
+		const selection: SubscriptionSelection = {
+			fields: {
+				item: {
+					type: 'TodoItem',
+					keyRaw: 'item',
+
+					selection: {
+						fields: {
+							createdAt: {
+								type: 'DateTime',
+								keyRaw: 'createdAt',
+								bubbleNull: true,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		expect(unmarshalSelection(testConfigFile(), selection, data)).toEqual({
+			item: null,
+		})
+	})
+
+	test('bubble null up two levels', function () {
+		const data = {
+			item: {
+				createdAt: null,
+			},
+		}
+
+		const selection: SubscriptionSelection = {
+			fields: {
+				item: {
+					type: 'TodoItem',
+					keyRaw: 'item',
+					bubbleNull: true,
+
+					selection: {
+						fields: {
+							createdAt: {
+								type: 'DateTime',
+								keyRaw: 'createdAt',
+								bubbleNull: true,
+							},
+						},
+					},
+				},
+			},
+		}
+
+		expect(unmarshalSelection(testConfigFile(), selection, data)).toEqual(null)
+	})
+
 	test('nested objects', function () {
 		// the date to compare against
 		const date = new Date()
