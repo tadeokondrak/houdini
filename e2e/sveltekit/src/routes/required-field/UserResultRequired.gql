@@ -1,0 +1,7 @@
+query UserRequired($id: ID!, $forceNullDate: Boolean!) {
+  user(id: $id, snapshot: "user-result-required", forceNullDate: $forceNullDate) {
+      id
+      name
+      birthDate @required
+  }
+}
