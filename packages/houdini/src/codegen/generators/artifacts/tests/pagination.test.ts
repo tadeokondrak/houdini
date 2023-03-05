@@ -93,7 +93,7 @@ test('pagination arguments stripped from key', async function () {
 		                                    "node": {
 		                                        "type": "User",
 		                                        "keyRaw": "node",
-		                                        "nullable": true,
+		                                        "nullability": "server",
 
 		                                        "selection": {
 		                                            "fields": {
@@ -282,7 +282,7 @@ test('pagination arguments stays in key as it s a SinglePage Mode', async functi
 		                                    "node": {
 		                                        "type": "User",
 		                                        "keyRaw": "node",
-		                                        "nullable": true,
+		                                        "nullability": "server",
 
 		                                        "selection": {
 		                                            "fields": {
@@ -581,7 +581,7 @@ test('cursor as scalar gets the right pagination query argument types', async fu
 		                                                "node": {
 		                                                    "type": "User",
 		                                                    "keyRaw": "node",
-		                                                    "nullable": true,
+		                                                    "nullability": "server",
 
 		                                                    "selection": {
 		                                                        "fields": {
@@ -600,7 +600,7 @@ test('cursor as scalar gets the right pagination query argument types', async fu
 		                                                                                    "node": {
 		                                                                                        "type": "User",
 		                                                                                        "keyRaw": "node",
-		                                                                                        "nullable": true,
+		                                                                                        "nullability": "server",
 
 		                                                                                        "selection": {
 		                                                                                            "fields": {
@@ -858,7 +858,7 @@ test("sibling aliases don't get marked", async function () {
 		                                    "node": {
 		                                        "type": "User",
 		                                        "keyRaw": "node",
-		                                        "nullable": true,
+		                                        "nullability": "server",
 
 		                                        "selection": {
 		                                            "fields": {
@@ -877,7 +877,7 @@ test("sibling aliases don't get marked", async function () {
 		                                                                        "node": {
 		                                                                            "type": "User",
 		                                                                            "keyRaw": "node",
-		                                                                            "nullable": true,
+		                                                                            "nullability": "server",
 
 		                                                                            "selection": {
 		                                                                                "fields": {
@@ -989,7 +989,7 @@ test("sibling aliases don't get marked", async function () {
 		                                    "node": {
 		                                        "type": "User",
 		                                        "keyRaw": "node",
-		                                        "nullable": true,
+		                                        "nullability": "server",
 
 		                                        "selection": {
 		                                            "fields": {
@@ -1008,7 +1008,7 @@ test("sibling aliases don't get marked", async function () {
 		                                                                        "node": {
 		                                                                            "type": "User",
 		                                                                            "keyRaw": "node",
-		                                                                            "nullable": true,
+		                                                                            "nullability": "server",
 
 		                                                                            "selection": {
 		                                                                                "fields": {

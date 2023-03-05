@@ -191,14 +191,14 @@ function prepareSelection({
 			}
 
 			if (nullable) {
-				fieldObj.nullable = true
+				fieldObj.nullability = 'server'
 			}
 
 			const requiredDirective = field.directives?.find(
 				(directive) => directive.name.value == config.requiredDirective
 			)
 			if (requiredDirective) {
-				fieldObj.bubbleNull = true
+				fieldObj.nullability = 'client'
 			}
 
 			// is there an operation for this field

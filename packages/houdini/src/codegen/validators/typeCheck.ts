@@ -349,6 +349,7 @@ export default async function typeCheck(config: Config, docs: Document[]): Promi
 					listTypes,
 					fragments,
 				}),
+				validateRequiredDirective(config, filepath),
 				// checkMutationOperation
 				checkMutationOperation(config),
 				// checkMaskDirective
@@ -386,7 +387,30 @@ export default async function typeCheck(config: Config, docs: Document[]): Promi
 	return
 }
 
-//
+function validateRequiredDirective(config: Config, filepath: string) {
+	return function (ctx: graphql.ValidationContext): graphql.ASTVisitor {
+		return {
+			Field(node, _, __, ___, ancestors) {
+				const requiredDirective = node.directives?.find(
+					({ name }) => name.value === config.requiredDirective
+				)
+				if (!requiredDirective) return
+
+				const parentType = parentTypeFromAncestors(config.schema, filepath, ancestors)
+
+				// Check that we're on an object type, not an argument or interface type
+				if (!(parentType instanceof graphql.GraphQLObjectType)) {
+					ctx.reportError(
+						new graphql.GraphQLError(
+							`@${config.requiredDirective} may only be used on objects, not arguments`
+						)
+					)
+					return
+				}
+			},
+		}
+	}
+}
 
 // build up the custom rule that requires parentID on all list directives
 // applied to list fragment spreads whose name does not appear in `freeLists`

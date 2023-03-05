@@ -486,7 +486,7 @@ test('interface to interface inline fragment', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: $id)",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "abstractFields": {
@@ -649,7 +649,7 @@ test('paginate over unions', async function () {
 		                                    "node": {
 		                                        "type": "Entity",
 		                                        "keyRaw": "node",
-		                                        "nullable": true,
+		                                        "nullability": "server",
 
 		                                        "selection": {
 		                                            "abstractFields": {
@@ -3866,7 +3866,7 @@ describe('mutation artifacts', function () {
 			                                    "node": {
 			                                        "type": "User",
 			                                        "keyRaw": "node",
-			                                        "nullable": true,
+			                                        "nullability": "server",
 
 			                                        "selection": {
 			                                            "fields": {
@@ -4090,7 +4090,7 @@ describe('mutation artifacts', function () {
 			                                    "node": {
 			                                        "type": "User",
 			                                        "keyRaw": "node",
-			                                        "nullable": true,
+			                                        "nullability": "server",
 
 			                                        "selection": {
 			                                            "fields": {
@@ -4611,7 +4611,7 @@ test('operation inputs', async function () {
 		            "user": {
 		                "type": "User",
 		                "keyRaw": "user(enumArg: $enumArg, filter: $filter, filterList: $filterList, id: $id)",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "fields": {
@@ -4894,7 +4894,7 @@ test('nested recursive fragments', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: \\"some_id\\")",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "abstractFields": {
@@ -5013,7 +5013,7 @@ test('leave @include and @skip alone', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: \\"some_id\\")",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "fields": {
@@ -5126,7 +5126,7 @@ test('fragment references are embedded in artifact', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: \\"some_id\\")",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "fields": {
@@ -5237,7 +5237,7 @@ test('fragment variables are embedded in artifact', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: \\"some_id\\")",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "fields": {
@@ -5260,7 +5260,7 @@ test('fragment variables are embedded in artifact', async function () {
 		                                "field": {
 		                                    "type": "String",
 		                                    "keyRaw": "field(filter: \\"Foo\\")",
-		                                    "nullable": true
+		                                    "nullability": "server"
 		                                },
 
 		                                "id": {
@@ -5358,7 +5358,7 @@ test('fragment references in inline fragment', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: $id)",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "abstractFields": {
@@ -5478,7 +5478,7 @@ test('masking disabled', async function () {
 		            "node": {
 		                "type": "Node",
 		                "keyRaw": "node(id: $id)",
-		                "nullable": true,
+		                "nullability": "server",
 
 		                "selection": {
 		                    "abstractFields": {
@@ -5547,5 +5547,189 @@ test('masking disabled', async function () {
 		};
 
 		"HoudiniHash=77d79038702f2dbb57f3af777b214fedb15c7ec5bcd99c2e2fe2146ae8770ded";
+	`)
+})
+
+test('client nullability', async function () {
+	// the config to use in tests
+	const config = testConfig()
+
+	// the documents to test
+	const docs: Document[] = [
+		mockCollectedDoc(`
+			query TestQuery($id: ID!) @load {
+				node(id: $id) {
+					...LegendWithRequiredName
+					...GhostWithRequiredLegendName
+				}
+			}
+		`),
+		mockCollectedDoc(`
+			fragment LegendWithRequiredName on Legend {
+				name @required
+			}
+		`),
+		mockCollectedDoc(`
+			fragment GhostWithRequiredLegendName on Ghost {
+				legends {
+					name @required
+				}
+			}
+		`),
+		mockCollectedDoc(`
+			fragment GhostWithRequiredLegendAndLegendName on Ghost {
+				legends @required {
+					name @required
+				}
+			}
+		`),
+	]
+
+	// execute the generator
+	await runPipeline(config, docs)
+	expect(docs[0]).toMatchInlineSnapshot(`
+		export default {
+		    "name": "TestQuery",
+		    "kind": "HoudiniQuery",
+		    "hash": "ffc5b1e3cd00f93539929e88ce8c820f23b36b351914553fe636851609861ab8",
+
+		    "raw": \`query TestQuery($id: ID!) {
+		  node(id: $id) {
+		    ...LegendWithRequiredName
+		    ...GhostWithRequiredLegendName
+		    id
+		    __typename
+		  }
+		}
+
+		fragment LegendWithRequiredName on Legend {
+		  name
+		}
+
+		fragment GhostWithRequiredLegendName on Ghost {
+		  legends {
+		    name
+		  }
+		  name
+		  aka
+		}
+		\`,
+
+		    "rootType": "Query",
+
+		    "selection": {
+		        "fields": {
+		            "node": {
+		                "type": "Node",
+		                "keyRaw": "node(id: $id)",
+		                "nullability": "server",
+
+		                "selection": {
+		                    "abstractFields": {
+		                        "fields": {
+		                            "Legend": {
+		                                "name": {
+		                                    "type": "String",
+		                                    "keyRaw": "name",
+		                                    "nullability": "client"
+		                                },
+
+		                                "id": {
+		                                    "type": "ID",
+		                                    "keyRaw": "id",
+		                                    "visible": true
+		                                },
+
+		                                "__typename": {
+		                                    "type": "String",
+		                                    "keyRaw": "__typename"
+		                                }
+		                            },
+
+		                            "Ghost": {
+		                                "legends": {
+		                                    "type": "Legend",
+		                                    "keyRaw": "legends",
+
+		                                    "selection": {
+		                                        "fields": {
+		                                            "name": {
+		                                                "type": "String",
+		                                                "keyRaw": "name",
+		                                                "nullability": "client"
+		                                            }
+		                                        }
+		                                    }
+		                                },
+
+		                                "name": {
+		                                    "type": "String",
+		                                    "keyRaw": "name",
+		                                    "visible": true
+		                                },
+
+		                                "aka": {
+		                                    "type": "String",
+		                                    "keyRaw": "aka",
+		                                    "visible": true
+		                                },
+
+		                                "id": {
+		                                    "type": "ID",
+		                                    "keyRaw": "id",
+		                                    "visible": true
+		                                },
+
+		                                "__typename": {
+		                                    "type": "String",
+		                                    "keyRaw": "__typename"
+		                                }
+		                            }
+		                        },
+
+		                        "typeMap": {}
+		                    },
+
+		                    "fields": {
+		                        "id": {
+		                            "type": "ID",
+		                            "keyRaw": "id",
+		                            "visible": true
+		                        },
+
+		                        "__typename": {
+		                            "type": "String",
+		                            "keyRaw": "__typename",
+		                            "visible": true
+		                        }
+		                    },
+
+		                    "fragments": {
+		                        "LegendWithRequiredName": {},
+		                        "GhostWithRequiredLegendName": {}
+		                    }
+		                },
+
+		                "abstract": true,
+		                "visible": true
+		            }
+		        }
+		    },
+
+		    "pluginData": {},
+
+		    "input": {
+		        "fields": {
+		            "id": "ID"
+		        },
+
+		        "types": {}
+		    },
+
+		    "policy": "CacheOrNetwork",
+		    "partial": false
+		};
+
+		"HoudiniHash=ffc5b1e3cd00f93539929e88ce8c820f23b36b351914553fe636851609861ab8";
 	`)
 })
