@@ -9,6 +9,7 @@ export const routes = {
   fetching_route_1: '/fetching/route_1',
   lists_all: '/lists-all?limit=15',
   union_result: '/union-result',
+  required_field: '/required-field',
 
   Stores_SSR: '/stores/ssr',
   Stores_Network: '/stores/network',
