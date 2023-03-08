@@ -23,6 +23,7 @@ export function inlineType({
 	missingScalars,
 	includeFragments,
 	allOptional,
+	forceNonNull,
 }: {
 	config: Config
 	filepath: string
@@ -35,6 +36,7 @@ export function inlineType({
 	missingScalars: Set<string>
 	includeFragments: boolean
 	allOptional?: boolean
+	forceNonNull?: boolean
 }): TSTypeKind {
 	// start unwrapping non-nulls and lists (we'll wrap it back up before we return)
 	const { type, wrappers } = unwrapType(config, rootType)
@@ -190,6 +192,12 @@ export function inlineType({
 				// figure out the response name
 				const attributeName = selection.alias?.value || selection.name.value
 
+				const hasRequiredDirective =
+					selection.directives &&
+					selection.directives.some(
+						(directive) => directive.name.value === config.requiredDirective
+					)
+
 				// figure out the corresponding typescript type
 				let attributeType = inlineType({
 					config,
@@ -203,6 +211,7 @@ export function inlineType({
 					missingScalars,
 					includeFragments,
 					allOptional,
+					forceNonNull: hasRequiredDirective,
 				})
 
 				// check if we have an @include or @skip directive
@@ -372,7 +381,7 @@ export function inlineType({
 
 	// we need to wrap the result in the right combination of nullable, list, and non-null markers
 	for (const toWrap of wrappers) {
-		if (!root && toWrap === TypeWrapper.Nullable) {
+		if (!root && toWrap === TypeWrapper.Nullable && !forceNonNull) {
 			result = nullableField(result)
 		}
 		// if its a non-null we don't need to add anything
