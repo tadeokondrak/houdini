@@ -42,6 +42,7 @@ export function inlineType({
 	const { type, wrappers } = unwrapType(config, rootType)
 
 	let result: TSTypeKind
+	let forceNullable = false
 	// if we are looking at a scalar field
 	if (graphql.isScalarType(type)) {
 		result = scalarPropertyValue(config, missingScalars, type as graphql.GraphQLNamedType)
@@ -192,11 +193,17 @@ export function inlineType({
 				// figure out the response name
 				const attributeName = selection.alias?.value || selection.name.value
 
+				// for @required, we force the field to be non-null but the
+				// current type has to become nullable if it isn't already
 				const hasRequiredDirective =
 					selection.directives &&
 					selection.directives.some(
 						(directive) => directive.name.value === config.requiredDirective
 					)
+
+				if (hasRequiredDirective) {
+					forceNullable = true
+				}
 
 				// figure out the corresponding typescript type
 				let attributeType = inlineType({
@@ -289,7 +296,8 @@ export function inlineType({
 				selections: fragment,
 				allowReadonly,
 				visitedTypes,
-				root,
+				// I think this needs to be changed but I'm not sure what to?
+				root: true,
 				body,
 				missingScalars,
 				includeFragments,
@@ -379,9 +387,15 @@ export function inlineType({
 		throw Error('Could not convert selection to typescript')
 	}
 
+	if (forceNullable && !wrappers.includes(TypeWrapper.Nullable)) {
+		wrappers.push(TypeWrapper.Nullable)
+	}
+
 	// we need to wrap the result in the right combination of nullable, list, and non-null markers
 	for (const toWrap of wrappers) {
-		if (!root && toWrap === TypeWrapper.Nullable && !forceNonNull) {
+		// the root field should be non-nullable except if forceNullable is set
+		// forceNonNull overrides the previous preference
+		if (toWrap === TypeWrapper.Nullable && !(root && !forceNullable) && !forceNonNull) {
 			result = nullableField(result)
 		}
 		// if its a non-null we don't need to add anything

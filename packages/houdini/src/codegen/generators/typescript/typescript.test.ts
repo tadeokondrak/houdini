@@ -81,6 +81,7 @@ const config = testConfig({
 			firstName: String!
 			nickname: String
 			parent: User
+			parentRequired: User!
 			friends: [User]
 			enumValue: MyEnum
 
@@ -1661,6 +1662,104 @@ describe('typescript', function () {
 			};
 
 			export type MyQuery$input = null;
+		`)
+	})
+
+	test('@required directive makes non-nullable parent nullable', async function () {
+		const doc = mockCollectedDoc(`
+			query MyQuery {
+				user {
+					parentRequired {
+						id
+						firstName
+						nickname @required
+					}
+				}
+			}
+		`)
+
+		await runPipeline(config, [doc])
+
+		const fileContents = await fs.readFile(config.artifactTypePath(doc.document))
+
+		expect(
+			recast.parse(fileContents!, {
+				parser: typeScriptParser,
+			})
+		).toMatchInlineSnapshot(`
+			export type MyQuery = {
+			    readonly "input": MyQuery$input;
+			    readonly "result": MyQuery$result | undefined;
+			};
+
+			export type MyQuery$result = {
+			    readonly user: {
+			        readonly parentRequired: {
+			            readonly id: string;
+			            readonly firstName: string;
+			            readonly nickname: string;
+			        } | null;
+			    } | null;
+			};
+
+			export type MyQuery$input = null;
+		`)
+	})
+
+	test('@required in fragments', async function () {
+		// the document to test
+		const doc = mockCollectedDoc(`
+			fragment MyFragment on User {
+				id
+				firstName
+				nickname @required
+				parent @required {
+					id
+					firstName
+					nickname @required
+				}
+				parentRequired {
+					id
+					firstName
+					nickname @required
+				}
+			}
+		`)
+
+		// execute the generator
+		await runPipeline(config, [doc])
+
+		// look up the files in the artifact directory
+		const fileContents = await fs.readFile(config.artifactTypePath(doc.document))
+
+		// make sure they match what we expect
+		expect(
+			recast.parse(fileContents!, {
+				parser: typeScriptParser,
+			})
+		).toMatchInlineSnapshot(`
+			export type MyFragment = {
+			    readonly "shape"?: MyFragment$data;
+			    readonly " $fragments": {
+			        "MyFragment": any;
+			    };
+			};
+
+			export type MyFragment$data = {
+			    readonly id: string;
+			    readonly firstName: string;
+			    readonly nickname: string;
+			    readonly parent: {
+			        readonly id: string;
+			        readonly firstName: string;
+			        readonly nickname: string;
+			    };
+			    readonly parentRequired: {
+			        readonly id: string;
+			        readonly firstName: string;
+			        readonly nickname: string;
+			    } | null;
+			} | null;
 		`)
 	})
 
